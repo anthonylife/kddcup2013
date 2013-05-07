@@ -1,0 +1,7 @@
+{
+    "postr_doc": "../../data/confirmedFeatureWithSim.csv",
+    "negtr_doc": "../../data/deletedFeatureWithSim.csv",
+    "vali_doc": "../../data/validFeatureWithSim.csv",
+    "paper_doc": "../../data/Paper.csv",
+    "paperauthor_doc": "../../data/PaperAuthor.csv"
+}
