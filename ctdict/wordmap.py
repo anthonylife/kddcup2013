@@ -52,8 +52,8 @@ def preprocess(raw_str, stemmer, stopwords):
         fragments = line.lower().split(' ')
         for fragment in fragments:
             if len(fragment) > 1:
-                stemmed_word = fragment
-                #stemmed_word = stemmer.stem_word(fragment)
+                #stemmed_word = fragment
+                stemmed_word = stemmer.stem_word(fragment)
                 if stemmed_word not in temp_dict and \
                         not stopwords.is_stopword(fragment):
                     temp_dict[stemmed_word] = 1

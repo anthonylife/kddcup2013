@@ -35,17 +35,20 @@ def sub_dict(somedict, somekeys):
 
 def select_doc(prob_dict1, prob_dict2=None):
     author_doc = {}
-    for key in prob_dict1.keys():
+    for author_key in prob_dict1.keys():
         if prob_dict2 != None:
-            if key not in prob_dict2.keys():
+            if author_key not in prob_dict2.keys():
                 print 'Key not match.'
                 sys.exit(1)
-            temp_list = prob_dict1[key] + prob_dict2[key]
-            temp_list = sorted(temp_list, key = lambda x:x[1], reverse=True)
-            topk = len(temp_list)/3+1
-            author_doc[key] = [entry[0] for entry in temp_list[:topk]]
+            doc_list = prob_dict1[author_key] + prob_dict2[author_key]
+            doc_list = sorted(doc_list, key = lambda x:x[1], reverse=True)
+            topk = len(doc_list)/3+1
+            author_doc[author_key] = [entry[0] for entry in doc_list[:topk]]
         else:
-
+            doc_list = prob_dict1[author_key]
+            doc_list = sorted(doc_list, key = lambda x:x[1], reverse=True)
+            topk = len(doc_list)/3+1
+            author_doc[author_key] = [entry[0] for entry in doc_list[:topk]]
     return author_doc
 
 
@@ -71,8 +74,11 @@ def mkpairfeatures(titleSim, paths, pos_dict, neg_dict, author_set,\
 
 def mksinglefeatures(titleSim, paths, test_features, test_dict, test_doc):
     test_prob = titleSim.label_predict(test_dict)
-    author_doc = select(test_prob)
+    author_doc = select_doc(test_prob)
     test_titlesim = titleSim.calsim(author_doc, [test_pair[0:2] for test_pair in test_features])
+    test_newfeatures = [entry1+entry2 for entry1,entry2 in zip(test_features, test_titlesim)]
+    writer = csv.writer(open(paths[test_doc], 'w'), lineterminator="\n")
+    writer.writerows(test_newfeatures)
 
 
 def main():
@@ -88,14 +94,20 @@ def main():
     postr_ins = [ins[:-1] for ins in csv.reader(open(postr_doc))]
     negtr_ins = [ins[:-1] for ins in csv.reader(open(negtr_doc))]
     vali_ins = [ins[:-1] for ins in csv.reader(open(vali_doc))]
+    #--test--#
+    #print postr_ins[:3]
+    #raw_input()
 
     # convert list to dictionary which regard "author id" as key
     postr_dict = list_to_dict(postr_ins)
     negtr_dict = list_to_dict(negtr_ins)
     vali_dict  = list_to_dict(vali_ins)
+    #--test--#
+    #print postr_dict["826"]
+    #raw_input()
 
     # randomly partition users
-    authors = set([entry[0] for entry in postr_ins])
+    authors = list(set([entry[0] for entry in postr_ins]))
     random.shuffle(authors)
     init_set = authors[0:len(authors)/3]
     train_set = authors[len(authors)/3+1:len(authors)*3/4]
@@ -105,15 +117,22 @@ def main():
     print "Making title similarity features."
     features_conf = dict_to_list(postr_dict, init_set)
     features_deleted = dict_to_list(negtr_dict, init_set)
-    titleSim = TitleSim(features_conf[2:], features_deleted[2:])
+    #--test--#
+    #print features_conf[:3]
+    #raw_input()
+    titleSim = TitleSim([feature[2:] for feature in features_conf],\
+            [feature[2:] for feature in features_deleted])
 
+    ## make features for training pairs in positive ins and negative ins
     mkpairfeatures(titleSim,paths,postr_dict,negtr_dict,train_set,\
             "new_postr_doc","new_negtr_doc")
 
+    ## make features for test pairs in positive ins and negative ins
     mkpairfeatures(titleSim,paths,postr_dict,negtr_dict,test_set,\
             "new_poste_doc","new_negte_doc")
 
-    mksinglefeatures(titleSim, paths, vali_dict, vali_ins, "new_vali_doc")
+    ## make features for validation pairs
+    mksinglefeatures(titleSim, paths, vali_ins, vali_dict, "new_vali_doc")
 
 
 

@@ -5,7 +5,7 @@ import sys
 sys.path.append('../')
 import csv, json
 from nltk.stem import PorterStemmer
-from skleanr.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 
 class TitleSim:
     def __init__(self, features_conf, features_deleted):
@@ -18,7 +18,7 @@ class TitleSim:
         self.classifier = RandomForestClassifier(n_estimators=50,
                                             verbose=2,
                                             n_jobs=1,
-                                            min_samples_split1=10,
+                                            min_samples_split=10,
                                             random_state=1)
         self.classifier.fit(features, target)
 
@@ -59,7 +59,7 @@ class TitleSim:
             if pair[0] not in author_doc:
                 print 'Key error.'
                 sys.exit(1)
-            title_features += self.calpairsim(author_doc[pair[0]], pair[1])
+            title_features.append(self.calpairsim(author_doc[pair[0]], pair[1]))
 
         return title_features
 
@@ -89,6 +89,9 @@ class TitleSim:
         comm_num = len(set(author_words.keys()) & set(doc_words.keys()))
 
         # pearson coefficient
-        pearson = comm_num*1.0/ (len(set(author_words.keys())) + len(set(doc_words.keys())))
+        if (len(set(author_words.keys())) + len(set(doc_words.keys()))) != 0:
+            pearson = comm_num*1.0/ (len(set(author_words.keys())) + len(set(doc_words.keys())))
+        else:
+            pearson = 0.0
 
         return [comm_num, pearson]

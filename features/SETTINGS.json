@@ -6,7 +6,7 @@
     "new_negtr_doc": "../../features/trainDeletedFeatures.csv",
     "new_poste_doc": "../../features/testConfirmedFeatures.csv",
     "new_negte_doc": "../../features/testDeletedFeatures.csv",
-    "new_vali_doc": "../../features/validFeatureWithSim.csv",
+    "new_vali_doc": "../../features/validFeatures.csv",
     "paper_doc": "../../data/Paper.csv",
     "paperauthor_doc": "../../data/PaperAuthor.csv",
     "title_wordmap": "../../dict/Titlemap"
