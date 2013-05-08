@@ -7,8 +7,8 @@ def main():
     paths = json.loads(open("SETTINGS.json").read())
 
     print("Getting features for deleted papers from the database")
-    features_conf = csv.reader(open(paths["trainpos_features"]))
-    features_deleted = csv.reader(open(paths["trainneg_features"]))
+    features_conf = [feature for feature in csv.reader(open(paths["trainpos_features"]))]
+    features_deleted = [feature for feature in csv.reader(open(paths["trainneg_features"]))]
 
     features = [x[2:] for x in features_deleted + features_conf]
     target = [0 for x in range(len(features_deleted))] + [1 for x in range(len(features_conf))]

@@ -18,7 +18,7 @@ def load_model():
 def write_submission(predictions):
     paths = json.loads(open("SETTINGS.json").read())
     submission_path = paths["submission_path"]
-    rows = [(prediction[0], paper_ids_to_string(prediction[1:])) for prediction in predictions]
+    rows = [(author_id, paper_ids_to_string(predictions[author_id])) for author_id in predictions]
     writer = csv.writer(open(submission_path, "w"), lineterminator="\n")
     writer.writerow(("AuthorId", "PaperIds"))
     writer.writerows(rows)
