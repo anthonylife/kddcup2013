@@ -1,0 +1,9 @@
+{
+    "model_path": "model.pickle",
+    "submission_path": "submission.csv",
+    "trainpos_features": "../../features/trainConfirmedFeatures.csv",
+    "trainneg_features": "../../features/trainDeletedFeatures.csv",
+    "testpos_features": "../../features/testConfirmedFeatures.csv",
+    "testneg_features": "../../features/testDeletedFeatures.csv",
+    "vali_features": "../../features/validFeatures.csv"
+}
