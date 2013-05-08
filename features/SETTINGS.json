@@ -2,6 +2,12 @@
     "postr_doc": "../../data/confirmedFeatureWithSim.csv",
     "negtr_doc": "../../data/deletedFeatureWithSim.csv",
     "vali_doc": "../../data/validFeatureWithSim.csv",
+    "new_postr_doc": "../../features/trainConfirmedFeatures.csv",
+    "new_negtr_doc": "../../features/trainDeletedFeatures.csv",
+    "new_poste_doc": "../../features/testConfirmedFeatures.csv",
+    "new_negte_doc": "../../features/testDeletedFeatures.csv",
+    "new_vali_doc": "../../features/validFeatureWithSim.csv",
     "paper_doc": "../../data/Paper.csv",
-    "paperauthor_doc": "../../data/PaperAuthor.csv"
+    "paperauthor_doc": "../../data/PaperAuthor.csv",
+    "title_wordmap": "../../dict/Titlemap"
 }
