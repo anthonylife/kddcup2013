@@ -5,6 +5,7 @@ import csv
 import sys
 import json
 import random
+from collections import defaultdict
 from mkTitleSim import TitleSim
 
 
@@ -42,12 +43,12 @@ def select_doc(prob_dict1, prob_dict2=None):
                 sys.exit(1)
             doc_list = prob_dict1[author_key] + prob_dict2[author_key]
             doc_list = sorted(doc_list, key = lambda x:x[1], reverse=True)
-            topk = len(doc_list)/3+1
+            topk = len(doc_list)/5+1
             author_doc[author_key] = [entry[0] for entry in doc_list[:topk]]
         else:
             doc_list = prob_dict1[author_key]
             doc_list = sorted(doc_list, key = lambda x:x[1], reverse=True)
-            topk = len(doc_list)/3+1
+            topk = len(doc_list)/5+1
             author_doc[author_key] = [entry[0] for entry in doc_list[:topk]]
     return author_doc
 
@@ -81,6 +82,93 @@ def mksinglefeatures(titleSim, paths, test_features, test_dict, test_doc):
     writer.writerows(test_newfeatures)
 
 
+def load_year_info(author_table1, author_table2):
+    '''load two tabels.
+    '''
+    author_paper_year = defaultdict(dict)
+    author_year_cnt = defaultdict(dict)
+
+    author_list1 = [entry for entry in csv.reader(open(author_table1))]
+    author_list2 = [entry for entry in csv.reader(open(author_table2))]
+
+    for entry in author_list1[1:]:
+        #author_paper_year[entry[0]].append(entry[1:])
+        if entry[2] and int(entry[2]) != 0:
+            author_paper_year[entry[0]][entry[1]] = int(entry[2])
+        else:
+            author_paper_year[entry[0]][entry[1]] = 0
+
+    for entry in author_list2[1:]:
+        #author_year_cnt[entry[0]].append(entry[1:])
+        if entry[1] and int(entry[1]) != 0:
+            author_year_cnt[entry[0]][int(entry[1])] = int(entry[2])
+        else:
+            author_paper_year[entry[0]][entry[1]] = 0
+    return (author_paper_year, author_year_cnt)
+
+
+def make_year_feature(author_paper_year, author_year_cnt, pairs):
+    time_fea_num = 5
+    features = [[-1 for i in range(time_fea_num)] for i in range(len(pairs))]
+
+    for i, pair in enumerate(pairs):
+        yearlist = sorted(author_year_cnt[pair[0]].items(), key = lambda x:x[0])
+        if len(yearlist) == 0:
+            features[i][0] = -1
+            features[i][1] = -1
+            features[i][2] = -1
+            features[i][3] = -1
+            features[i][4] = -1
+            continue
+
+        # 1. time gap between the starting publition time of author and
+        #    time of this paper;
+        features[i][0] = abs(yearlist[0][0] - author_paper_year[pair[0]][pair[1]])
+        if yearlist[0] == 0 or author_paper_year[0] == 0:
+            features[i][0] = -1
+        elif features[i][0] > 500:
+            features[i][0] = -1
+        # 2. number of papers the author published in the same year as
+        #    target paper;
+        year = author_paper_year[pair[0]][pair[1]]
+        if year == 0:
+            features[i][1] = -1
+        else:
+            features[i][1] = author_year_cnt[pair[0]][year]
+        # 3. precentage of papers publised in the same year as target paper;
+        year_count = [entry[1] for entry in author_year_cnt[pair[0]].items()]
+        sum_count = sum(year_count)
+        if year == 0:
+            features[i][2] = 0
+        else:
+            features[i][2] = author_year_cnt[pair[0]][year]*1.0/sum_count
+        # 4. time gap between the year of most publised paper and the year of
+        #    target paper;
+        count = max(year_count)
+        yearlist = [entry[0] for entry in author_year_cnt[pair[0]].items()]
+        max_year = yearlist[year_count.index(count)]
+        features[i][3] = abs(max_year - year)
+        if yearlist[0] == 0 or author_paper_year[0] == 0:
+            features[i][3] = -1
+        elif features[i][3] > 500:
+            features[i][3] = -1
+        # 5. time gap between the year of least publised paper and the year of
+        #    target paper;
+        count = min(year_count)
+        min_year = yearlist[year_count.index(count)]
+        features[i][4] = abs(min_year - year)
+        if yearlist[0] == 0 or author_paper_year[0] == 0:
+            features[i][4] = -1
+        elif features[i][4] > 500:
+            features[i][4] = -1
+    return features
+
+def write_features(features, feature_file):
+    writer = csv.writer(open(feature_file, 'w'), lineterminator="\n")
+    writer.writerows(features)
+
+
+# main function
 def main():
     # reading paths
     print "Reading file path from the configuration file 'SETTINGS.json'"
@@ -106,12 +194,13 @@ def main():
     #print postr_dict["826"]
     #raw_input()
 
+    ## Make title and keyword similarity features
     # randomly partition users
-    authors = list(set([entry[0] for entry in postr_ins]))
+    '''authors = list(set([entry[0] for entry in postr_ins]))
     random.shuffle(authors)
-    init_set = authors[0:len(authors)/3]
-    train_set = authors[len(authors)/3+1:len(authors)*3/4]
-    test_set = authors[len(authors)*3/4+1:len(authors)]
+    init_set = authors[0:int(len(authors)*2.0/5)]
+    train_set = authors[int(len(authors)*2.0/5)+1:int(len(authors)*4.5/5)]
+    test_set = authors[int(len(authors)*4.5/5)+1:len(authors)]
 
     # making the first feature: title similarity
     print "Making title similarity features."
@@ -133,8 +222,39 @@ def main():
 
     ## make features for validation pairs
     mksinglefeatures(titleSim, paths, vali_ins, vali_dict, "new_vali_doc")
+    '''
 
+    ## Make time dependent features
+    # 1. time gap between the starting publition time of author and
+    #    time of this paper;
+    # 2. number of papers the author published in the same year as
+    #    target paper;
+    # 3. precentage of papers publised in the same year as target paper;
+    # 4. time gap between the year of most publised paper and the year of
+    #    target paper;
+    # 5. time gap between the year of least publised paper and the year of
+    #    target paper;
+    (author_paper_year,author_year_cnt)=load_year_info(paths['author_paper_year'],\
+            paths['author_year_cnt'])
 
+    postr_year_fea = make_year_feature(author_paper_year, author_year_cnt,\
+            [entry[0:2] for entry in postr_ins])
+    features = [feature1 + feature2 for feature1, feature2 in zip(postr_ins, postr_year_fea)]
+    write_features(features, paths["new_postr_doc"])
+
+    del postr_year_fea
+
+    negtr_year_fea = make_year_feature(author_paper_year, author_year_cnt,\
+            [entry[0:2] for entry in negtr_ins])
+    features = [feature1 + feature2 for feature1, feature2 in zip(negtr_ins, negtr_year_fea)]
+    write_features(features, paths["new_negtr_doc"])
+    del negtr_year_fea
+
+    vali_year_fea = make_year_feature(author_paper_year, author_year_cnt,\
+            [entry[0:2] for entry in vali_ins])
+    features = [feature1 + feature2 for feature1, feature2 in zip(vali_ins, vali_year_fea)]
+    write_features(features, paths["new_vali_doc"])
+    del vali_year_fea
 
 if __name__ == "__main__":
     main()
