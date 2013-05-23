@@ -116,25 +116,6 @@ def make_year_feature(author_paper_year, author_year_cnt, paper_author, pairs):
     for i, pair in enumerate(pairs):
         yearlist = sorted(author_year_cnt[pair[0]].items(), key = lambda x:x[0])
         if len(yearlist) == 0:
-            features[i][0] = -1
-            features[i][1] = -1
-            features[i][2] = -1
-            features[i][3] = -1
-            features[i][4] = -1
-            features[i][5] = -1
-            features[i][6] = -1
-            features[i][7] = -1
-            features[i][8] = -1
-            features[i][9] = -1
-            features[i][10] = -1
-            features[i][11] = -1
-            features[i][12] = -1
-            features[i][13] = -1
-            features[i][14] = -1
-            features[i][15] = -1
-            features[i][16] = -1
-            features[i][17] = -1
-            features[i][18] = -1
             continue
 
         # 1. time gap between the starting publition time of author and
