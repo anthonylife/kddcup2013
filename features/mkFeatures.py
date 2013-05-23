@@ -110,7 +110,7 @@ def load_year_info(author_table1, author_table2):
 
 
 def make_year_feature(author_paper_year, author_year_cnt, paper_author, pairs):
-    time_fea_num = 10
+    time_fea_num = 19
     features = [[-1 for i in range(time_fea_num)] for i in range(len(pairs))]
 
     for i, pair in enumerate(pairs):
@@ -126,6 +126,15 @@ def make_year_feature(author_paper_year, author_year_cnt, paper_author, pairs):
             features[i][7] = -1
             features[i][8] = -1
             features[i][9] = -1
+            features[i][10] = -1
+            features[i][11] = -1
+            features[i][12] = -1
+            features[i][13] = -1
+            features[i][14] = -1
+            features[i][15] = -1
+            features[i][16] = -1
+            features[i][17] = -1
+            features[i][18] = -1
             continue
 
         # 1. time gap between the starting publition time of author and
@@ -179,21 +188,56 @@ def make_year_feature(author_paper_year, author_year_cnt, paper_author, pairs):
                 features[i][4] = -1
             elif features[i][4] > 500:
                 features[i][4] = -1
+
         # 6. number of co-author in current year
         count = make_year_coauthor_feature(0, author_paper_year, paper_author, pair)
         features[i][5] = count
+        if len(paper_author[pair[1]]) > 1:
+            features[i][6] = count*1.0/len(paper_author[pair[1]])
+        else:
+            features[i][6] = -1
         # 7. number of co-author one year before or after current year
         count = make_year_coauthor_feature(1, author_paper_year, paper_author, pair)
-        features[i][6] = count
+        features[i][7] = count
+        if len(paper_author[pair[1]]) > 1:
+            features[i][8] = count*1.0/len(paper_author[pair[1]])
+        else:
+            features[i][8] = -1
         # 8. number of co-author two year before current year
         count = make_year_coauthor_feature(-2, author_paper_year, paper_author, pair)
-        features[i][7] = count
+        features[i][9] = count
+        if len(paper_author[pair[1]]) > 1:
+            features[i][10] = count*1.0/len(paper_author[pair[1]])
+        else:
+            features[i][10] = -1
         # 9. number of co-author three year before current year
         count = make_year_coauthor_feature(-3, author_paper_year, paper_author, pair)
-        features[i][8] = count
+        features[i][11] = count
+        if len(paper_author[pair[1]]) > 1:
+            features[i][12] = count*1.0/len(paper_author[pair[1]])
+        else:
+            features[i][12] = -1
         # 10. number of co-author five year before current year
         count = make_year_coauthor_feature(-5, author_paper_year, paper_author, pair)
-        features[i][9] = count
+        features[i][13] = count
+        if len(paper_author[pair[1]]) > 1:
+            features[i][14] = count*1.0/len(paper_author[pair[1]])
+        else:
+            features[i][14] = -1
+
+        (count, max_length, min_length) = make_length_year_feature(author_paper_year, paper_author, pair)
+        # 15. total count of years co-authored
+        features[i][15] = count
+        # 16. average total count of years co-authored
+        if count == -1 or len(paper_author[pair[1]]) == 1:
+            features[i][16] = -1
+        else:
+            features[i][16] = count*1.0 / (len(paper_author[pair[1]]) - 1)
+        # 17. longest year
+        features[i][17] = max_length
+        # 18. shorted year
+        features[i][18] = min_length
+
 
     return features
 
@@ -252,6 +296,28 @@ def make_year_coauthor_feature(year_range, author_paper_year, paper_author, pair
 
     return num_coauthor
 
+def make_length_year_feature(author_paper_year, paper_author, pair):
+    length_year_coauthor = [0 for i in range(len(paper_author[pair[1]]))]
+    target_year = author_paper_year[pair[0]][pair[1]]
+
+    if target_year > 1900 and target_year <= 2013:
+        global_min_length = 150
+        for i, author in enumerate(paper_author[pair[1]]):
+            max_length = 0
+            for entry in author_paper_year[pair[0]].items():
+                if author != pair[0]:
+                    if author in paper_author[entry[0]]:
+                        length_year = target_year - author_paper_year[pair[0]][entry[0]]
+                        if length_year > max_length:
+                            max_length = length_year
+                        if length_year >= 0 and length_year < global_min_length:
+                            global_min_length = length_year
+            length_year_coauthor[i] = max_length
+        count = sum(length_year_coauthor)
+        global_max_length = max(length_year_coauthor)
+        return (count, global_max_length, global_min_length)
+    else:
+        return (-1, -1, -1)
 
 # main function
 def main():
@@ -320,6 +386,7 @@ def main():
     # (5). time gap between the year of least publised paper and the year of
     #    target paper;
     # (6). time dependent co-author relationship
+    # (7). year count features
     (author_paper_year,author_year_cnt,paper_author)=load_year_info(paths['author_paper_year'],\
             paths['author_year_cnt'])
 
@@ -340,6 +407,7 @@ def main():
     features = [feature1 + feature2 for feature1, feature2 in zip(vali_ins, vali_year_fea)]
     write_features(features, paths["new_vali_doc"])
     del vali_year_fea
+
 
 if __name__ == "__main__":
     main()
