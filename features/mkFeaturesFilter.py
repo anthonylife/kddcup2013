@@ -82,15 +82,17 @@ def mksinglefeatures(titleSim, paths, test_features, test_dict, test_doc):
     writer.writerows(test_newfeatures)
 
 
-def load_year_info(author_table1, author_table2):
+def load_year_info(author_table1, author_table2, author_table3):
     '''load two tabels, return three dictionary
     '''
     author_paper_year = defaultdict(dict)
     author_year_cnt = defaultdict(dict)
     paper_author = defaultdict(set)
+    filter_author_paper = defaultdict(set)
 
     author_list1 = [entry for entry in csv.reader(open(author_table1))]
     author_list2 = [entry for entry in csv.reader(open(author_table2))]
+    author_list3 = [entry for entry in csv.reader(open(author_table3))]
 
     for entry in author_list1[1:]:
         # author as key
@@ -106,10 +108,15 @@ def load_year_info(author_table1, author_table2):
             author_year_cnt[entry[0]][int(entry[1])] = int(entry[2])
         else:
             author_year_cnt[entry[0]][entry[1]] = 0
-    return (author_paper_year, author_year_cnt, paper_author)
+
+    for entry in author_list3[1:]:
+        filter_author_paper[entry[0]].add(entry[1])
+
+    return (author_paper_year, author_year_cnt, paper_author, filter_author_paper)
 
 
-def make_year_feature(author_paper_year, author_year_cnt, paper_author, pairs):
+def make_year_feature(author_paper_year, author_year_cnt, paper_author, \
+        filter_author_paper, pairs):
     time_fea_num = 19
     features = [[-1 for i in range(time_fea_num)] for i in range(len(pairs))]
 
@@ -120,10 +127,6 @@ def make_year_feature(author_paper_year, author_year_cnt, paper_author, pairs):
 
         # 1. time gap between the starting publition time of author and
         #    time of this paper;
-        #print yearlist[0][0]
-        #print type(yearlist[0][0])
-        #print author_paper_year[pair[0]][pair[1]]
-        #print type(author_paper_year[pair[0]][pair[1]])
 
         first_year = find_first_year(yearlist)
         if first_year == -1:
@@ -171,42 +174,48 @@ def make_year_feature(author_paper_year, author_year_cnt, paper_author, pairs):
                 features[i][4] = -1
 
         # 6. number of co-author in current year
-        count = make_year_coauthor_feature(0, author_paper_year, paper_author, pair)
+        count = make_year_coauthor_feature(0, author_paper_year, paper_author, pair,\
+                filter_author_paper)
         features[i][5] = count
         if len(paper_author[pair[1]]) > 1:
             features[i][6] = count*1.0/len(paper_author[pair[1]])
         else:
             features[i][6] = -1
         # 7. number of co-author one year before or after current year
-        count = make_year_coauthor_feature(1, author_paper_year, paper_author, pair)
+        count = make_year_coauthor_feature(1, author_paper_year, paper_author, pair,\
+                filter_author_paper)
         features[i][7] = count
         if len(paper_author[pair[1]]) > 1:
             features[i][8] = count*1.0/len(paper_author[pair[1]])
         else:
             features[i][8] = -1
         # 8. number of co-author two year before current year
-        count = make_year_coauthor_feature(-2, author_paper_year, paper_author, pair)
+        count = make_year_coauthor_feature(-2, author_paper_year, paper_author, pair,\
+                filter_author_paper)
         features[i][9] = count
         if len(paper_author[pair[1]]) > 1:
             features[i][10] = count*1.0/len(paper_author[pair[1]])
         else:
             features[i][10] = -1
         # 9. number of co-author three year before current year
-        count = make_year_coauthor_feature(-3, author_paper_year, paper_author, pair)
+        count = make_year_coauthor_feature(-3, author_paper_year, paper_author, pair,\
+                filter_author_paper)
         features[i][11] = count
         if len(paper_author[pair[1]]) > 1:
             features[i][12] = count*1.0/len(paper_author[pair[1]])
         else:
             features[i][12] = -1
         # 10. number of co-author five year before current year
-        count = make_year_coauthor_feature(-5, author_paper_year, paper_author, pair)
+        count = make_year_coauthor_feature(-5, author_paper_year, paper_author, pair,\
+                filter_author_paper)
         features[i][13] = count
         if len(paper_author[pair[1]]) > 1:
             features[i][14] = count*1.0/len(paper_author[pair[1]])
         else:
             features[i][14] = -1
 
-        (count, max_length, min_length) = make_length_year_feature(author_paper_year, paper_author, pair)
+        (count, max_length, min_length) = make_length_year_feature(author_paper_year,\
+                paper_author, pair, filter_author_paper)
         # 15. total count of years co-authored
         features[i][15] = count
         # 16. average total count of years co-authored
@@ -249,7 +258,8 @@ def write_features(features, feature_file):
     writer = csv.writer(open(feature_file, 'w'), lineterminator="\n")
     writer.writerows(features)
 
-def make_year_coauthor_feature(year_range, author_paper_year, paper_author, pair):
+def make_year_coauthor_feature(year_range, author_paper_year, paper_author, pair,\
+        filter_author_paper):
     # find papers that author published within a year_range (<0)
     if pair[0] not in author_paper_year:
         print 'author key error.'
@@ -261,11 +271,13 @@ def make_year_coauthor_feature(year_range, author_paper_year, paper_author, pair
     paper_list = set()
     for entry in author_paper_year[pair[0]].items():
         if year_range >= 0:
-            if entry[1] > 500 and abs(entry[1] - target_year) <= year_range:
+            if entry[1] > 500 and abs(entry[1] - target_year) <= year_range\
+                    and entry[0] in filter_author_paper[pair[0]]:
                 paper_list.add(entry[0])
         else:
-            if entry[1] > 500 and (entry[1] - target_year) > year_range and\
-                    (entry[1] - target_year) <= 0:
+            if entry[1] > 500 and (entry[1] - target_year) > year_range\
+                    and (entry[1] - target_year) <= 0 and entry[0] in\
+                    filter_author_paper[pair[0]]:
                 paper_list.add(entry[0])
 
     # count time-dependent co-author relationship
@@ -277,7 +289,7 @@ def make_year_coauthor_feature(year_range, author_paper_year, paper_author, pair
 
     return num_coauthor
 
-def make_length_year_feature(author_paper_year, paper_author, pair):
+def make_length_year_feature(author_paper_year, paper_author, pair, filter_author_paper):
     length_year_coauthor = [0 for i in range(len(paper_author[pair[1]]))]
     target_year = author_paper_year[pair[0]][pair[1]]
 
@@ -287,7 +299,7 @@ def make_length_year_feature(author_paper_year, paper_author, pair):
             max_length = 0
             for entry in author_paper_year[pair[0]].items():
                 if author != pair[0]:
-                    if author in paper_author[entry[0]]:
+                    if entry[0] in filter_author_paper[pair[0]] and author in paper_author[entry[0]]:
                         length_year = target_year - author_paper_year[pair[0]][entry[0]]
                         if length_year > max_length:
                             max_length = length_year
@@ -368,24 +380,24 @@ def main():
     #    target paper;
     # (6). time dependent co-author relationship
     # (7). year count features
-    (author_paper_year, author_year_cnt, \
-            paper_author)=load_year_info(paths['author_paper_year'],\
-            paths['author_year_cnt'])
+    (author_paper_year, author_year_cnt, paper_author, filter_author_paper)=\
+            load_year_info(paths['author_paper_year'],\
+            paths['author_year_cnt'], paths['filter_author_paper'])
 
     postr_year_fea = make_year_feature(author_paper_year, author_year_cnt,\
-            paper_author, [entry[0:2] for entry in postr_ins])
+            paper_author, filter_author_paper, [entry[0:2] for entry in postr_ins])
     features = [feature1 + feature2 for feature1, feature2 in zip(postr_ins, postr_year_fea)]
     write_features(features, paths["new_postr_doc"])
     del postr_year_fea
 
     negtr_year_fea = make_year_feature(author_paper_year, author_year_cnt,\
-            paper_author, [entry[0:2] for entry in negtr_ins])
+            paper_author, filter_author_paper, [entry[0:2] for entry in negtr_ins])
     features = [feature1 + feature2 for feature1, feature2 in zip(negtr_ins, negtr_year_fea)]
     write_features(features, paths["new_negtr_doc"])
     del negtr_year_fea
 
     vali_year_fea = make_year_feature(author_paper_year, author_year_cnt,\
-            paper_author, [entry[0:2] for entry in vali_ins])
+            paper_author, filter_author_paper, [entry[0:2] for entry in vali_ins])
     features = [feature1 + feature2 for feature1, feature2 in zip(vali_ins, vali_year_fea)]
     write_features(features, paths["new_vali_doc"])
     del vali_year_fea
