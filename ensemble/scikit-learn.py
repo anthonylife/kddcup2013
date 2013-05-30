@@ -6,7 +6,7 @@ from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import BernoulliNB
 
 
-MODEL_NUM = 1
+MODEL_NUM = 3
 
 CV_NUM = 5
 CV_TC_SEPNUM = [0, 24689, 24689*2, 24689*3, 24689*4, 123447]
@@ -16,12 +16,13 @@ def main():
     print("Loading paths")
     paths = json.loads(open("SETTINGS.json").read())
 
-    print("Getting features for deleted papers from the database")
+    print("Getting features for deleted papers from the disk file")
     features_conf = [feature for feature in csv.reader(open(paths["trainpos_features"]))]
     features_deleted = [feature for feature in csv.reader(open(paths["trainneg_features"]))]
 
-    td_features = [x[2:] for x in features_deleted]
-    tc_features = [x[2:] for x in features_conf]
+    td_features = [map(lambda y: float(y), x[2:]) for x in features_deleted]
+    tc_features = [map(lambda y: float(y), x[2:]) for x in features_conf]
+
     td_target = [0 for x in range(len(features_deleted))]
     tc_target = [1 for x in range(len(features_conf))]
 
@@ -57,33 +58,40 @@ def main():
     td_probs = [0.0 for i in range(len(td_features))]
 
     for i in range(CV_NUM):
-        print("crossvalidation num: #%d\n" % i+1)
+        print("crossvalidation num: #%d" % (i+1))
         classifier.fit(tc_features[0:CV_TC_SEPNUM[i]] + tc_features[CV_TC_SEPNUM[i+1]+1:] +\
                 td_features[0:CV_TD_SEPNUM[i]] + td_features[CV_TD_SEPNUM[i+1]+1:],\
                 tc_target[0:CV_TC_SEPNUM[i]] + tc_target[CV_TC_SEPNUM[i+1]+1:] +\
                 td_target[0:CV_TD_SEPNUM[i]] + td_target[CV_TD_SEPNUM[i+1]+1:])
 
-        predictions = classifier.predict_proba(tc_features[CV_TC_SEPNUM[i]:CV_TC_SEPNUM[i+1]])[:,1]
+        if MODEL_NUM == 2:
+            predictions = classifier.predict(tc_features[CV_TC_SEPNUM[i]:CV_TC_SEPNUM[i+1]])
+        else:
+            predictions = classifier.predict_proba(tc_features[CV_TC_SEPNUM[i]:CV_TC_SEPNUM[i+1]])[:,1]
         predictions = list(predictions)
         tc_probs[CV_TC_SEPNUM[i]:CV_TC_SEPNUM[i+1]] = predictions
 
-        predictions = classifier.predict_proba(td_features[CV_TD_SEPNUM[i]:CV_TD_SEPNUM[i+1]])[:,1]
+        if MODEL_NUM == 2:
+            predictions = classifier.predict(td_features[CV_TD_SEPNUM[i]:CV_TD_SEPNUM[i+1]])
+        else:
+            predictions = classifier.predict_proba(td_features[CV_TD_SEPNUM[i]:CV_TD_SEPNUM[i+1]])[:,1]
         predictions = list(predictions)
         td_probs[CV_TD_SEPNUM[i]:CV_TD_SEPNUM[i+1]] = predictions
 
     tc_wfd.writelines(["%s\n" % prob for prob in tc_probs])
     tc_wfd.close()
-    td_wfd = open(paths['trainneg_ans'], 'w')
     td_wfd.writelines(["%s\n" % prob for prob in td_probs])
     td_wfd.close()
 
     # clear memcache
     del td_probs, predictions
 
-    features_vali = [feature for feature in csv.reader(open(paths['vali_features']))]
+    features_vali = [map(lambda y: float(y), feature[2:]) for feature in csv.reader(open(paths['vali_features']))]
     classifier.fit(tc_features+td_features, tc_target+td_target)
-    v_probs = classifier.predict_proba(features_vali)
-    v_wfd = open(paths["vali_ans"], 'w')
+    if MODEL_NUM == 2:
+        v_probs = classifier.predict(features_vali)
+    else:
+        v_probs = classifier.predict_proba(features_vali)[:,1]
     v_wfd.writelines(["%s\n" % prob for prob in v_probs])
     v_wfd.close()
 
