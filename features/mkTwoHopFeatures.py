@@ -43,28 +43,27 @@ def mk_twohop_coauthor(author_author_dict, paper_author_dict, pairs):
 
 
 def load_confjour_author_info(paper_confjour_doc, paper_author_dict):
-    confjour_author_dict = defaultdict(set)
+    author_confjour_dict = defaultdict(set)
 
     for entry in csv.reader(open(paper_confjour_doc)):
         for authorid in paper_author_dict[entry[0]]:
-            confjour_author_dict[entry[1]].add(authorid)
+            author_confjour_dict[authorid].add(entry[1])
 
-    return confjour_author_dict
+    return author_confjour_dict
 
 
-def mk_twohop_confjour(paper_author_dict, confjour_author_dict, pairs):
+def mk_twohop_confjour(paper_author_dict, author_confjour_dict, pairs):
     features = [[-1, -1] for i in range(len(pairs))]
     for i, pair in enumerate(pairs):
+        print i
+        if len(paper_author_dict[pair[1]]) == 1:
+            continue
         for authorid in paper_author_dict[pair[1]]:
-            if len(paper_author_dict[pair[1]]) == 1:
+            if authorid == pair[0]:
                 continue
-            for confid in confjour_author_dict.keys():
-                if authorid == pair[0]:
-                    continue
-                if authorid in confjour_author_dict[confid] and\
-                        pair[0] in confjour_author_dict[confid]:
-                    features[i][0] += 1
-            features[i][1] = features[i][0]*1.0/(len(paper_author_dict[pair[1]])-1)
+            features[i][0] += \
+                    len(author_confjour_dict[authorid]&author_confjour_dict[pair[0]])
+        features[i][1] = features[i][0]*1.0/(len(paper_author_dict[pair[1]])-1)
 
     return features
 
@@ -84,9 +83,9 @@ def main():
 
     # loading instances
     print "Loading labeled instances."
-    tc_features = [ins[0:7] for ins in csv.reader(open(tc_doc))]
-    td_features = [ins[0:7] for ins in csv.reader(open(td_doc))]
-    v_features = [ins[0:7] for ins in csv.reader(open(v_doc))]
+    tc_features = [ins for ins in csv.reader(open(tc_doc))]
+    td_features = [ins for ins in csv.reader(open(td_doc))]
+    v_features = [ins for ins in csv.reader(open(v_doc))]
 
     # loading authors' co-author dictionary
     (author_author_dict, paper_author_dict) = load_coauthor_info(paths["paperauthor_doc"])
@@ -102,30 +101,30 @@ def main():
     del author_author_dict
 
     # loading authors' conf dictionary
-    conf_author_dict = load_confjour_author_info(paths["paper_conf"], paper_author_dict)
-    features = mk_twohop_confjour(paper_author_dict, conf_author_dict,\
+    author_conf_dict = load_confjour_author_info(paths["paper_conf"], paper_author_dict)
+    features = mk_twohop_confjour(paper_author_dict, author_conf_dict,\
             [entry[0:2] for entry in tc_features])
     tc_features = [feature1+feature2 for feature1, feature2 in zip(tc_features, features)]
-    features = mk_twohop_confjour(paper_author_dict, conf_author_dict,\
+    features = mk_twohop_confjour(paper_author_dict, author_conf_dict,\
             [entry[0:2] for entry in td_features])
     td_features = [feature1+feature2 for feature1, feature2 in zip(td_features, features)]
-    features = mk_twohop_confjour(paper_author_dict, conf_author_dict,\
+    features = mk_twohop_confjour(paper_author_dict, author_conf_dict,\
             [entry[0:2] for entry in v_features])
     v_features = [feature1+feature2 for feature1, feature2 in zip(v_features, features)]
-    del conf_author_dict
+    del author_conf_dict
 
     # loading authors' journal dictionary
-    jour_author_dict = load_confjour_author_info(paths["paper_jour"], paper_author_dict)
-    features = mk_twohop_confjour(paper_author_dict, jour_author_dict,\
+    author_jour_dict = load_confjour_author_info(paths["paper_jour"], paper_author_dict)
+    features = mk_twohop_confjour(paper_author_dict, author_jour_dict,\
             [entry[0:2] for entry in tc_features])
     tc_features = [feature1+feature2 for feature1, feature2 in zip(tc_features, features)]
-    features = mk_twohop_confjour(paper_author_dict, jour_author_dict,\
+    features = mk_twohop_confjour(paper_author_dict, author_jour_dict,\
             [entry[0:2] for entry in td_features])
     td_features = [feature1+feature2 for feature1, feature2 in zip(td_features, features)]
-    features = mk_twohop_confjour(paper_author_dict, jour_author_dict,\
+    features = mk_twohop_confjour(paper_author_dict, author_jour_dict,\
             [entry[0:2] for entry in v_features])
     v_features = [feature1+feature2 for feature1, feature2 in zip(v_features, features)]
-    del jour_author_dict
+    del author_jour_dict
 
     # write features
     tc_doc = paths["new_postr_doc"]
