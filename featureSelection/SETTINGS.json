@@ -1,0 +1,6 @@
+{
+    "trainpos_features": "../../features/trainConfirmedFeatures.csv",
+    "trainneg_features": "../../features/trainDeletedFeatures.csv",
+    "vali_features": "../../features/validFeatures.csv",
+    "selection_result": "./featureSelectionResult.csv"
+}
