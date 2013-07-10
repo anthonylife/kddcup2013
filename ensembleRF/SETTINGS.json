@@ -1,0 +1,21 @@
+{
+    "model_path": "./model.pickle",
+    "model_path1": "./model-1.pickle",
+    "model_path2": "./model-2.pickle",
+    "model_path3": "./model-3.pickle",
+    "model_path4": "./model-4.pickle",
+    "fusion_model_path": "./model-fusion.pickle",
+    "trainpos_features": "../../features/trainConfirmedFeatures.csv",
+    "trainneg_features": "../../features/trainDeletedFeatures.csv",
+    "vali_features": "../../features/validFeatures.csv",
+    "vali_solution": "../../data/ValidSolution.csv",
+    "tc_linearSVC": "../../ensembleData/tc_linearSVC.txt",
+    "td_linearSVC": "../../ensembleData/td_linearSVC.txt",
+    "v_linearSVC": "../../ensembleData/v_linearSVC.txt",
+    "tc_logistic": "../../ensembleData/tc_logistic.txt",
+    "td_logistic": "../../ensembleData/td_logistic.txt",
+    "v_logistic": "../../ensembleData/v_logistic.txt",
+    "tc_BNB": "../../ensembleData/tc_BNB.txt",
+    "td_BNB": "../../ensembleData/td_BNB.txt",
+    "v_BNB": "../../ensembleData/v_BNB.txt"
+}

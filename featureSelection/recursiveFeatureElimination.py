@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.feature_selection import RFECV
 from sklearn.svm import SVR
+from sklearn.svm import LinearSVC
 
 def main():
     print("Loading paths")
@@ -28,8 +29,12 @@ def main():
                                         n_jobs=4,
                                         min_samples_split=10,
                                         random_state=1)
-    '''
     classifier = SVR(kernel="linear")
+    '''
+    classifier = LinearSVC(penalty='l2', loss='l2', dual=True, tol=0.0001, C=1.0,\
+                multi_class='ovr',fit_intercept=True, intercept_scaling=1,\
+                class_weight=None, verbose=0, random_state=None)
+
     print("Start feature selection")
     selector = RFECV(classifier, step=1, cv=5)
     print features.shape
