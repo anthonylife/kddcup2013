@@ -6,10 +6,19 @@ def main():
     paths = json.loads(open("SETTINGS.json").read())
 
     print("Getting features for deleted papers from the disk files")
-    features_conf = [feature for feature in csv.reader(open(paths["trainpos_features"]))]
-    features_deleted = [feature for feature in csv.reader(open(paths["trainneg_features"]))]
-    features = [x[2:] for x in features_deleted + features_conf]
-    target = [0 for x in range(len(features_deleted))] + [1 for x in range(len(features_conf))]
+    tc_features = [feature for feature in\
+            csv.reader(open(paths["trainpos_features"]))]
+    td_features = [feature for feature in\
+            csv.reader(open(paths["trainneg_features"]))]
+    vc_features = [feature for feature in\
+            csv.reader(open(paths["validpos_features"]))]
+    vd_features = [feature for feature in\
+            csv.reader(open(paths["validneg_features"]))]
+    features = [x[2:] for x in td_features+tc_features+vd_features+vc_features]
+    target = [0 for x in range(len(td_features))] +\
+            [1 for x in range(len(tc_features))] +\
+            [0 for x in range(len(vd_features))] +\
+            [1 for x in range(len(vc_features))]
 
     print("Training the Classifier")
     classifier = RandomForestClassifier(n_estimators=360,
@@ -30,4 +39,3 @@ def main():
 
 if __name__=="__main__":
     main()
-

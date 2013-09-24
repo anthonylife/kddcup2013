@@ -1,6 +1,14 @@
 {
     "trainpos_features": "../../features/trainConfirmedFeatures.csv",
     "trainneg_features": "../../features/trainDeletedFeatures.csv",
+    "validpos_features": "../../features/validConfirmedFeatures.csv",
+    "validneg_features": "../../features/validDeletedFeatures.csv",
     "vali_features": "../../features/validFeatures.csv",
-    "selection_result": "./featureSelectionResult.csv"
+    "selection_result": "./featureSelectionResult.csv",
+    "my_selection_result": "./myFeatureSelectionResult.txt",
+    "tc_all_features": "../../features/tc_all_features.csv",
+    "td_all_features": "../../features/td_all_features.csv",
+    "v_all_features": "../../features/v_all_features.csv",
+    "cv_author": "../../features/cv_author.csv",
+    "vali_solution": "../../data/ValidSolution.csv"
 }
