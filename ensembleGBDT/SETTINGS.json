@@ -1,0 +1,20 @@
+{
+    "trainpos_features": "../../ensembleFeaturePartition/tc_0.9746.csv",
+    "trainneg_features": "../../ensembleFeaturePartition/td_0.9746.csv",
+    "vali_features": "../../ensembleFeaturePartition/v_0.9746.csv",
+    "tc_linearSVC": "../../ensembleData/tc_linearSVC.txt",
+    "td_linearSVC": "../../ensembleData/td_linearSVC.txt",
+    "v_linearSVC": "../../ensembleData/v_linearSVC.txt",
+    "tc_logistic": "../../ensembleData/tc_logistic.txt",
+    "td_logistic": "../../ensembleData/td_logistic.txt",
+    "v_logistic": "../../ensembleData/v_logistic.txt",
+    "tc_BNB": "../../ensembleData/tc_BNB.txt",
+    "td_BNB": "../../ensembleData/td_BNB.txt",
+    "v_BNB": "../../ensembleData/v_BNB.txt",
+    "tc_RF": "../../ensembleData/tc_RF.txt",
+    "td_RF": "../../ensembleData/td_RF.txt",
+    "v_RF": "../../ensembleData/v_RF.txt",
+    "tc_GBM": "../../ensembleData/tc_GBM.txt",
+    "td_GBM": "../../ensembleData/td_GBM.txt",
+    "v_GBM": "../../ensembleData/v_GBM.txt"
+}
